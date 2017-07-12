@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>DCC104 - Exemplo 02</title>
+    <script src="ImageLoader.js" charset="utf-8"></script>
+    <script src="AudioLoader.js" charset="utf-8"></script>
+    <script src="Sprite.js" charset="utf-8"></script>
+    <script src="Level.js" charset="utf-8"></script>
+  </head>
+  <body>
+    <h1>DCC104 - Exemplo 02</h1>
+    <canvas></canvas>
+    <script>
+      var eCanvas = document.getElementsByTagName("canvas")[0];
+      eCanvas.width = 600;
+      eCanvas.height = 380;
+      var ctx = eCanvas.getContext("2d");
+      var img = new Image();
+      img.onload = function() {
+        ctx.drawImage(img, 0, 0);
+      };
+      img.src = "images/fundo.jpg";
+
+      var il = new ImageLoader();
+      il.load("pc", "images/player_ship.png");
+      il.load("enemy", "images/enemy_1.png");
+      il.load("shot", "images/shot.png");
+
+      var al = new AudioLoader();
+      al.load("shot", "audios/Missle_Launch-Kibblesbob-2118796725.mp3");
+      al.load("boom", "audios/Grenade-SoundBible.com-1777900486.mp3");
+
+
+      var fps = 120;
+      var atual = new Date();
+      var anterior = new Date();
+      var dt = 1/fps;
+      var running = true;
+	  
+	  var life = 40;
+      var barLife = new Sprite();
+      barLife.color = "red";
+      barLife.x = 4;
+      barLife.y = 25;
+      barLife.width = life;
+	  barLife.height = 5;
+      
+	  
+	  var energy = 60;
+      var barEnergy = new Sprite();
+      barEnergy.color = "green";
+      barEnergy.x = 4;
+      barEnergy.y = 15;
+      barLife.width = energy;
+	  barEnergy.height = 5;
+	  
+	  
+      var player = new Sprite();
+      player.x = 300;
+      player.y = 360;
+      player.angle = -90;
+      var fuel = 100;
+      var acelerandoX = false;
+      var level = new Level();
+      level.imageLib = il;
+      level.init();
+
+      desenha();
+
+	  function reseta() {
+	  
+			energy = 60;
+			life = 40;
+            level.score = 0;
+            level.dificulty = 0;
+	  }
+
+
+      function desenha(){
+        
+        if(running) {
+            requestAnimationFrame(desenha);
+            atual = new Date();
+            dt = (atual - anterior)/1000;
+		
+            ctx.clearRect(0,0,eCanvas.width, eCanvas.height);
+            ctx.strokeRect(0,0,eCanvas.width, eCanvas.height);
+            ctx.drawImage(img, 0, 0);
+            ctx.fillStyle = "white";
+            ctx.fillText("FPS:"+Math.floor(1/dt), 6, 10);
+		
+            ctx.fillStyle = "white";
+            ctx.fillText("Energy: ", 6, 26);
+		
+            ctx.fillStyle = "white";
+            ctx.fillText("Life: ", 6, 46);
+		
+            ctx.fillStyle = "white";
+            ctx.fillText("Points: "+level.score, 6, 66);
+            
+            barLife.width = life;
+            barEnergy.width = energy;
+
+            player.mover(dt);
+		//azul.moverAng(dt);
+            level.mover(dt);
+
+            level.colidiuCom(player,
+             function(inimigo, alvo){
+		      if(energy > 0)
+				energy = energy - 20;
+              else {
+				 if(life > 0) {
+					life = life - 20;
+					energy = 60;
+				}
+				else {
+                    running = false;
+					//reseta();
+				}
+			}
+				
+			inimigo.y = -Math.floor((Math.random() * 100) + 0);
+			inimigo.x = Math.floor((Math.random() * 480) + 100);
+			inimigo.vy = Math.floor((Math.random() * level.dificulty) + 20);
+          }
+        );
+		
+
+            player.desenharImg(ctx, il.images["pc"]);
+            barLife.desenhar(ctx);
+            barEnergy.desenhar(ctx);
+            level.desenharImg(ctx);
+            level.colidiuComTiros(al,"boom")
+            anterior = atual;
+        }
+        else {
+            ctx.fillStyle = "black";
+            ctx.fillText("You Lose! Points: "+level.score, 200, 200);
+        }
+      }
+
+      addEventListener("keydown", function(e){
+	console.log(e.Keycode);
+        if(fuel<=0) return;
+        switch (e.keyCode) {
+          case 32:
+            level.fire(player, al, "shot", 0.5);
+            break;
+
+          case 37:
+            player.vx = -100;
+            break;
+          case 38:
+            player.am = 50;
+            break;
+          case 39:
+            player.vx = +100;
+            break;
+          default:
+
+        }
+      });
+      addEventListener("keyup", function(e){
+        switch (e.keyCode) {
+          case 37:
+            player.vx = 0;
+            break;
+          case 38:
+            player.am = 0;
+            break;
+          case 39:
+            player.vx = 0;
+            break;
+          default:
+
+        }
+      });
+
+    </script>
+  </body>
+
+
+
+
+</html>
